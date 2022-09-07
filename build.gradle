@@ -1,0 +1,66 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'distribution'
+    id 'org.openjfx.javafxplugin' version '0.0.10'
+}
+
+javafx {
+    modules = [ 'javafx.controls', 'javafx.fxml', 'javafx.graphics' ]
+    version = '16'
+}
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+sourceCompatibility = '11'
+mainClassName = 'org.example.Main'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+distributions {
+    main {
+        distributionBaseName = project.name
+        contents {
+            from(
+                    layout.projectDirectory.dir('src/dist'),
+            )
+        }
+    }
+}
+
+distTar {
+    enabled = false
+}
+
+distZip {
+    enabled = true
+}
+
+task fatJar(type: Jar) {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes 'Implementation-Title': 'Gradle Jar File Example',
+                'Implementation-Version': version,
+                'Main-Class': 'org.example.Main'
+    }
+    baseName = project.name + '-all'
+    from {
+//        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+        sourceSets.main.runtimeClasspath
+                .filter { (it.isDirectory() && it.listFiles().length > 0) || it.isFile() }
+                .collect { it.isDirectory() ? it : zipTree(it) }
+
+    }
+    with jar
+}
